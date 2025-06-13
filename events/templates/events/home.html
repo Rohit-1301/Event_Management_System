@@ -13,15 +13,66 @@
 {% endblock %}
 
 {% block content %}
+{% if imminent_events %}
+<style>
+    .countdown-marquee {
+        background: linear-gradient(135deg, #ffdd57 0%, #ff9f43 100%);
+        border-left: 4px solid #ff5e62;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .event-chip {
+        display: inline-block;
+        padding: 6px 15px;
+        border-radius: 20px;
+        background-color: rgba(255,255,255,0.7);
+        margin: 0 10px;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+    .event-chip:hover {
+        transform: scale(1.05);
+        background-color: rgba(255,255,255,0.9);
+    }
+    .blink {
+        animation: blinker 1.5s linear infinite;
+    }
+    @keyframes blinker {
+        50% { opacity: 0.7; }
+    }
+</style>
+
+<!-- Events happening in the next 24 hours -->
+<div class="countdown-marquee alert my-3 py-3">
+    <div class="d-flex align-items-center">
+        <div class="me-3 blink">
+            <i class="bi bi-alarm-fill fs-4 text-danger"></i>
+        </div>
+        <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();">
+            <strong class="fs-5 me-3">🔴 EVENTS HAPPENING IN THE NEXT 24 HOURS: </strong>
+            {% for event in imminent_events %}
+                <span class="event-chip">
+                    <a href="{% url 'event_detail' event.id %}" class="text-dark text-decoration-none">
+                        <strong>{{ event.title }}</strong> - {{ event.date|date:"M d" }}, {{ event.time|time:"H:i" }} at {{ event.venue }}
+                        <a href="{% url 'register_event' event.id %}" class="btn btn-sm btn-danger ms-2">Register Now!</a>
+                    </a>
+                </span>
+            {% endfor %}
+        </marquee>
+    </div>
+</div>
+{% endif %}
+
 <!-- Upcoming Events -->
 <section id="events" class="mb-5">
     <h2 class="section-title">Upcoming Events</h2>
     {% if upcoming_events %}
         <div class="row">
-            {% for event in upcoming_events %}
-                <div class="col-md-4 mb-4">
+            {% for event in upcoming_events %}                <div class="col-md-4 mb-4">
                     <div class="card event-card shadow h-100">
-                        <img src="https://source.unsplash.com/400x250/?event,{{ event.title|urlencode }}" class="card-img-top" alt="{{ event.title }}">
+                        {% if event.image %}
+                            <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <img src="https://source.unsplash.com/400x250/?event,{{ event.title|urlencode }}" class="card-img-top" alt="{{ event.title }}">
+                        {% endif %}
                         <div class="card-body">
                             <h5 class="card-title">{{ event.title }}</h5>
                             <p class="card-text text-muted">
@@ -66,11 +117,14 @@
     <h2 class="section-title">Past Events</h2>
     {% if past_events %}
         <div class="row">
-            {% for event in past_events %}
-                <div class="col-md-4 mb-4">
+            {% for event in past_events %}                <div class="col-md-4 mb-4">
                     <div class="card event-card shadow h-100 past-event">
                         <div class="position-relative">
-                            <img src="https://source.unsplash.com/400x250/?event,{{ event.title|urlencode }}" class="card-img-top" alt="{{ event.title }}">
+                            {% if event.image %}
+                                <img src="{{ event.image.url }}" class="card-img-top" alt="{{ event.title }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <img src="https://source.unsplash.com/400x250/?event,{{ event.title|urlencode }}" class="card-img-top" alt="{{ event.title }}">
+                            {% endif %}
                             <div class="position-absolute top-0 end-0 p-2">
                                 <span class="badge bg-secondary">Past Event</span>
                             </div>

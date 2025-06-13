@@ -55,9 +55,16 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
                     {% if user.is_authenticated and user.is_staff %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'admin_dashboard' %}">Admin Dashboard</a></li>
-                    {% endif %}
-                    {% if user.is_authenticated and not user.is_staff %}
+                    {% endif %}                    {% if user.is_authenticated and not user.is_staff %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'my_registrations' %}">My Registrations</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'student_profile' %}">
+                                My Profile
+                                {% if unread_notifications_count > 0 %}
+                                    <span class="badge rounded-pill bg-danger">{{ unread_notifications_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
                     {% endif %}
                     <li class="nav-item"><a class="nav-link" href="#events">Upcoming Events</a></li>
                     <li class="nav-item"><a class="nav-link" href="#history">Past Events</a></li>
@@ -73,12 +80,17 @@
                         <div class="dropdown">
                             <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                 {% if user.is_staff %}Admin{% else %}{{ user.get_full_name|default:user.username }}{% endif %}
-                            </button>                            <ul class="dropdown-menu dropdown-menu-end">
-                                {% if user.is_staff %}
+                            </button>                            <ul class="dropdown-menu dropdown-menu-end">                                {% if user.is_staff %}
                                     <li><a class="dropdown-item" href="{% url 'admin_dashboard' %}">Admin Dashboard</a></li>
                                     <li><a class="dropdown-item" href="{% url 'home' %}">User View</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 {% else %}
+                                    <li><a class="dropdown-item" href="{% url 'student_profile' %}">
+                                        My Profile
+                                        {% if unread_notifications_count > 0 %}
+                                            <span class="badge bg-danger ms-2">{{ unread_notifications_count }}</span>
+                                        {% endif %}
+                                    </a></li>
                                     <li><a class="dropdown-item" href="{% url 'my_registrations' %}">My Registrations</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 {% endif %}

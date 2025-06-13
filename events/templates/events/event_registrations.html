@@ -1,0 +1,74 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Event Registrations - {{ event.title }} - Event Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Registrations for {{ event.title }}</h1>
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Registered Participants</h5>
+                <span class="badge bg-light text-primary">{{ registrations.count }}</span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if registrations %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Participant</th>
+                                <th>Email</th>
+                                <th>Registration Type</th>
+                                <th>Registration Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in registrations %}
+                                <tr>
+                                    <td>{{ reg.name }}</td>
+                                    <td>{{ reg.email }}</td>
+                                    <td>
+                                        {% if reg.is_team_registration %}
+                                            <span class="badge bg-info">Team</span>
+                                            {% if reg.team %}
+                                                <small class="d-block">{{ reg.team.name }}</small>
+                                                {% if reg.user == reg.team.leader %}
+                                                    <span class="badge bg-warning text-dark">Team Leader</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Member</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-primary">Solo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ reg.registered_at|date:"M d, Y" }}<br>
+                                        <small class="text-muted">{{ reg.registered_at|time:"H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'remove_registration' reg.id %}" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-x-circle"></i> Remove
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> There are no registrations for this event yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

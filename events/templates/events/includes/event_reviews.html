@@ -1,0 +1,137 @@
+{% if event.date < today %}
+<div class="card shadow mt-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-star"></i> Reviews & Feedback
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- Review Stats -->
+        {% if reviews %}
+            <div class="rating-summary mb-4">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="display-4 fw-bold me-3">{{ avg_rating|floatformat:1 }}</div>
+                    <div>
+                        <div class="stars-container">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= avg_rating|add:"0.5"|floatformat:"0"|add:"0" %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                {% elif forloop.counter <= avg_rating|add:"0.5"|floatformat:"0"|add:"0"|add:"0.5" %}
+                                    <i class="bi bi-star-half text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-warning"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="small text-muted">
+                            {{ reviews.count }} review{% if reviews.count != 1 %}s{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Add Review Form -->
+        {% if user.is_authenticated %}
+            {% if is_registered and not user_has_reviewed %}
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="review_form" value="1">
+                    <h5>Share your experience</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="star-rating">
+                            {% for value, label in review_form.rating.field.choices %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="rating" id="star{{ value }}" value="{{ value }}" {% if value == 5 %}checked{% endif %}>
+                                    <label class="form-check-label" for="star{{ value }}">
+                                        {{ value }} {% if value == 1 %}star{% else %}stars{% endif %}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ review_form.comment.id_for_label }}" class="form-label">Your Review (optional)</label>
+                        {{ review_form.comment }}
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Submit Review
+                        </button>
+                    </div>
+                </form>
+            {% elif not is_registered %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> You must have participated in this event to leave a review.
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Please <a href="{% url 'login' %}">login</a> to leave a review.
+            </div>
+        {% endif %}
+
+        <!-- Reviews List -->
+        <h5 class="border-bottom pb-2 mt-4 mb-3">{{ reviews.count }} Review{% if reviews.count != 1 %}s{% endif %}</h5>
+        
+        {% if reviews %}
+            <div class="review-list">
+                {% for review in reviews %}
+                    <div class="review mb-4 pb-3 border-bottom" id="review-{{ review.id }}">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                {% if review.user.profile.profile_picture %}
+                                    <img src="{{ review.user.profile.profile_picture.url }}" alt="{{ review.user.username }}" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        {{ review.user.username|first|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                        <div class="text-warning mb-1">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    <i class="bi bi-star-fill"></i>
+                                                {% else %}
+                                                    <i class="bi bi-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ review.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                
+                                {% if review.comment %}
+                                    <div class="mt-2">
+                                        {{ review.comment|linebreaks }}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if review.user == user or user.is_staff %}
+                                    <div class="text-end mt-2">
+                                        <a href="{% url 'delete_review' review.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this review?');">
+                                            <i class="bi bi-trash"></i> Delete Review
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-light">
+                <i class="bi bi-star"></i> No reviews yet. Be the first to review this event!
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

@@ -1,5 +1,5 @@
 from django import forms
-from .models import EventRegistration, Event, Team, TeamMember
+from .models import EventRegistration, Event, Team, TeamMember, StudentProfile, EventDiscussion, EventReview
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 
@@ -17,7 +17,7 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = ['title', 'description', 'domain', 'participation_type', 
                   'venue', 'date', 'time', 'is_active', 
-                  'min_team_size', 'max_team_size']
+                  'min_team_size', 'max_team_size', 'image']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
@@ -28,7 +28,8 @@ class EventForm(forms.ModelForm):
             'time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'min_team_size': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
-            'max_team_size': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'})
+            'max_team_size': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
         }
 
 class LoginForm(AuthenticationForm):
@@ -144,3 +145,62 @@ class EventSearchForm(forms.Form):
         initial=True,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
+
+class StudentProfileForm(forms.ModelForm):
+    class Meta:
+        model = StudentProfile
+        fields = ['profile_picture', 'branch', 'year', 'bio', 'hobbies', 'interests', 'phone_number']
+        widgets = {
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'branch': forms.Select(attrs={'class': 'form-select'}),
+            'year': forms.Select(attrs={'class': 'form-select'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'hobbies': forms.TextInput(attrs={'class': 'form-control'}),
+            'interests': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., +91 9876543210'})
+        }
+
+class RemoveRegistrationForm(forms.Form):
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        help_text="Provide a reason for removing this registration."
+    )
+    remarks = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        help_text="Additional remarks or instructions for the student."
+    )
+
+class EventDiscussionForm(forms.ModelForm):
+    """Form for adding comments to event discussions"""
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Share your thoughts or questions about this event...'
+        })
+    )
+    
+    class Meta:
+        model = EventDiscussion
+        fields = ['message']
+
+
+class EventReviewForm(forms.ModelForm):
+    """Form for reviewing past events"""
+    rating = forms.ChoiceField(
+        choices=EventReview.RATING_CHOICES,
+        widget=forms.RadioSelect(attrs={'class': 'rating-input'}),
+    )
+    
+    comment = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Share your experience with this event...'
+        }),
+        required=False
+    )
+    
+    class Meta:
+        model = EventReview
+        fields = ['rating', 'comment']

@@ -10,7 +10,7 @@
                 <h5 class="card-title mb-0">Create New Event</h5>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <div class="mb-3">
@@ -75,8 +75,7 @@
                             <div class="form-text">Maximum number of participants in a team.</div>
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
+                      <div class="mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" checked>
                             <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
@@ -84,6 +83,13 @@
                             </label>
                             <div class="form-text">Inactive events will not be visible to users.</div>
                         </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">Event Image</label>
+                        {{ form.image.errors }}
+                        <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}" class="form-control" accept="image/*">
+                        <div class="form-text">Upload an image for this event (optional). Recommended size: 1200x600 pixels.</div>
                     </div>
                     
                     <div class="d-flex justify-content-between">

@@ -1,0 +1,225 @@
+{% extends 'events/base.html' %}
+
+{% block title %}My Profile - Event Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">My Profile</h1>
+
+    <!-- Notifications -->
+    {% if removals %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-bell"></i> Notifications ({{ removals.count }})
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for removal in removals %}
+                <div class="list-group-item list-group-item-warning">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">Removed from "{{ removal.event.title }}"</h5>
+                        <small>{{ removal.removed_at|date:"M d, Y" }}</small>
+                    </div>
+                    <p class="mb-1"><strong>Reason:</strong> {{ removal.reason }}</p>
+                    <p class="mb-1"><strong>Remarks:</strong> {{ removal.remarks }}</p>
+                    <div class="text-end mt-2">
+                        <a href="{% url 'mark_notification_read' removal.id %}" class="btn btn-sm btn-outline-secondary">
+                            Mark as Read
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Profile Information -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Your Information</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if profile.profile_picture %}
+                    <img src="{{ profile.profile_picture.url }}" alt="{{ request.user.username }}" 
+                         class="img-thumbnail rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="profile-placeholder rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center"
+                         style="width: 150px; height: 150px; background-color: #e9ecef; font-size: 72px; color: #adb5bd;">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <h4>{{ request.user.get_full_name }}</h4>
+                    <p class="text-muted">{{ request.user.email }}</p>
+                    
+                    <dl class="row mt-3 text-start">
+                        {% if profile.branch != 'OTHER' %}
+                        <dt class="col-sm-4">Branch</dt>
+                        <dd class="col-sm-8">{{ profile.get_branch_display }}</dd>
+                        {% endif %}
+                        
+                        {% if profile.year %}
+                        <dt class="col-sm-4">Year</dt>
+                        <dd class="col-sm-8">{{ profile.get_year_display }}</dd>
+                        {% endif %}
+                        
+                        {% if profile.phone_number %}
+                        <dt class="col-sm-4">Phone</dt>
+                        <dd class="col-sm-8">{{ profile.phone_number }}</dd>
+                        {% endif %}
+                    </dl>
+                    
+                    {% if profile.bio %}
+                    <div class="mt-3 text-start">
+                        <h6>About Me</h6>
+                        <p>{{ profile.bio }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile.hobbies %}
+                    <div class="mt-3 text-start">
+                        <h6>Hobbies</h6>
+                        <p>{{ profile.hobbies }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile.interests %}
+                    <div class="mt-3 text-start">
+                        <h6>Interests</h6>
+                        <p>{{ profile.interests }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Profile Form -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                            {{ form.profile_picture }}
+                            <div class="form-text">Upload a profile picture (optional).</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.branch.id_for_label }}" class="form-label">Branch/Department</label>
+                                {{ form.branch }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.year.id_for_label }}" class="form-label">Year of Study</label>
+                                {{ form.year }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.bio.id_for_label }}" class="form-label">About Me</label>
+                            {{ form.bio }}
+                            <div class="form-text">A short description about yourself.</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.hobbies.id_for_label }}" class="form-label">Hobbies</label>
+                                {{ form.hobbies }}
+                                <div class="form-text">What do you enjoy doing in your free time?</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.interests.id_for_label }}" class="form-label">Interests</label>
+                                {{ form.interests }}
+                                <div class="form-text">Academic or professional interests.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                            {{ form.phone_number }}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Event Schedule Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">My Event Schedule</h5>
+                </div>
+                <div class="card-body">
+                    {% if registrations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Date & Time</th>
+                                        <th>Venue</th>
+                                        <th>Registration Type</th>
+                                        <th>Registered On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reg in registrations %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'event_detail' reg.event.id %}">{{ reg.event.title }}</a>
+                                                {% if reg.event.date < today %}
+                                                    <span class="badge bg-secondary ms-1">Past</span>
+                                                {% elif not reg.event.is_active %}
+                                                    <span class="badge bg-danger ms-1">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ reg.event.date }}<br>
+                                                <small class="text-muted">{{ reg.event.time }}</small>
+                                            </td>
+                                            <td>{{ reg.event.venue }}</td>
+                                            <td>
+                                                {% if reg.is_team_registration %}
+                                                    <span class="badge bg-info">Team</span>
+                                                    {% if reg.team %}
+                                                        <small class="d-block">{{ reg.team.name }}</small>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="badge bg-primary">Solo</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ reg.registered_at|date:"M d, Y" }}</small>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> You are not registered for any events yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

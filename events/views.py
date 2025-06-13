@@ -3,25 +3,43 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Avg
 from django.http import JsonResponse
 from django.urls import reverse
-from .models import Event, EventRegistration, Team, TeamMember
+from .models import (Event, EventRegistration, Team, TeamMember, StudentProfile, 
+                    RegistrationRemoval, EventDiscussion, EventReview)
 from .forms import (EventRegistrationForm, EventForm, LoginForm, StudentSignupForm,
-                   TeamForm, TeamCodeForm, TeamMemberForm, EventSearchForm)
+                   TeamForm, TeamCodeForm, TeamMemberForm, EventSearchForm,
+                   StudentProfileForm, RemoveRegistrationForm, EventDiscussionForm,
+                   EventReviewForm)
 from datetime import date
+import os
 
 def is_admin(user):
     """Check if user is an admin"""
     return user.is_authenticated and user.is_staff
 
 def home(request):
+    from datetime import date, datetime, timedelta
+    
     today = date.today()
+    now = datetime.now()
+    next_24_hours = now + timedelta(hours=24)
     
     # Auto-update event status for past events
     Event.objects.filter(date__lt=today, is_active=True).update(is_active=False)
     
+    # Get upcoming events
     upcoming_events = Event.objects.filter(date__gte=today, is_active=True).order_by('date')
+    
+    # Get events happening within the next 24 hours
+    imminent_events = []
+    for event in upcoming_events:
+        event_datetime = datetime.combine(event.date, event.time)
+        if now <= event_datetime <= next_24_hours:
+            imminent_events.append(event)
+    
+    # Past events
     past_events = Event.objects.filter(date__lt=today).order_by('-date')
     
     # Get stats for the homepage
@@ -31,6 +49,7 @@ def home(request):
     return render(request, 'events/home.html', {
         'upcoming_events': upcoming_events,
         'past_events': past_events,
+        'imminent_events': imminent_events,
         'today': today,
         'event_count': event_count,
         'registration_count': registration_count
@@ -38,8 +57,12 @@ def home(request):
 
 def event_detail(request, event_id):
     event = get_object_or_404(Event, id=event_id)
+    today = date.today()
     is_registered = False
     user_team = None
+    user_has_reviewed = False
+    discussion_form = None
+    review_form = None
     
     # Check if user is already registered
     if request.user.is_authenticated:
@@ -47,14 +70,69 @@ def event_detail(request, event_id):
         is_registered = registration is not None
         if is_registered and registration.is_team_registration:
             user_team = registration.team
+        
+        # Check if user has already reviewed this event
+        user_has_reviewed = EventReview.objects.filter(event=event, user=request.user).exists()
+    
+    # Get top-level discussions (no parent comment)
+    discussions = EventDiscussion.objects.filter(event=event, parent=None).order_by('created_at')
+    
+    # Get reviews if it's a past event
+    reviews = []
+    avg_rating = 0
+    if event.date < today:
+        reviews = EventReview.objects.filter(event=event).order_by('-created_at')
+        avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    
+    # Handle discussion form submission
+    if request.method == 'POST' and request.user.is_authenticated:
+        if 'discussion_form' in request.POST and event.date >= today:
+            discussion_form = EventDiscussionForm(request.POST)
+            if discussion_form.is_valid():
+                comment = discussion_form.save(commit=False)
+                comment.event = event
+                comment.user = request.user
+                comment.is_admin_response = request.user.is_staff
+                
+                # Check if this is a reply to another comment
+                parent_id = request.POST.get('parent_id')
+                if parent_id:
+                    comment.parent = EventDiscussion.objects.get(id=parent_id)
+                    
+                comment.save()
+                messages.success(request, "Your comment has been added!")
+                return redirect('event_detail', event_id=event.id)
+            
+        elif 'review_form' in request.POST and event.date < today and is_registered and not user_has_reviewed:
+            review_form = EventReviewForm(request.POST)
+            if review_form.is_valid():
+                review = review_form.save(commit=False)
+                review.event = event
+                review.user = request.user
+                review.save()
+                messages.success(request, "Thank you for your review!")
+                return redirect('event_detail', event_id=event.id)
+    
+    # Create empty forms
+    if request.user.is_authenticated:
+        if event.date >= today:
+            discussion_form = EventDiscussionForm()
+        elif event.date < today and is_registered and not user_has_reviewed:
+            review_form = EventReviewForm()
     
     return render(request, 'events/event_detail.html', {
         'event': event,
-        'today': date.today(),
+        'today': today,
         'is_registered': is_registered,
         'user_team': user_team,
         'domain_display': dict(Event.DOMAIN_CHOICES)[event.domain],
-        'participation_type_display': dict(Event.PARTICIPATION_TYPE_CHOICES)[event.participation_type]
+        'participation_type_display': dict(Event.PARTICIPATION_TYPE_CHOICES)[event.participation_type],
+        'discussions': discussions,
+        'discussion_form': discussion_form,
+        'reviews': reviews,
+        'review_form': review_form,
+        'avg_rating': avg_rating,
+        'user_has_reviewed': user_has_reviewed
     })
 
 def register_event(request, event_id):
@@ -391,7 +469,7 @@ def admin_dashboard(request):
 @user_passes_test(is_admin)
 def create_event(request):
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventForm(request.POST, request.FILES)
         if form.is_valid():
             event = form.save()
             messages.success(request, f'Event "{event.title}" created successfully!')
@@ -407,8 +485,13 @@ def edit_event(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     
     if request.method == 'POST':
-        form = EventForm(request.POST, instance=event)
+        form = EventForm(request.POST, request.FILES, instance=event)
         if form.is_valid():
+            # Delete the old image if a new one is uploaded
+            if 'image' in request.FILES and event.image:
+                if os.path.isfile(event.image.path):
+                    os.remove(event.image.path)
+            
             form.save()
             messages.success(request, f'Event "{event.title}" updated successfully!')
             return redirect('admin_dashboard')
@@ -569,4 +652,165 @@ def delete_team(request, team_id):
     team.delete()
     
     messages.success(request, f"Team '{team_name}' has been deleted.")
+    return redirect('event_detail', event_id=event_id)
+
+@login_required
+def student_profile(request):
+    """View for students to see and edit their profile"""
+    from datetime import date
+    
+    # Get or create the profile for the user
+    profile, created = StudentProfile.objects.get_or_create(user=request.user)
+    
+    if created:
+        # If profile was just created, show a welcome message
+        messages.success(request, "Welcome! Please complete your profile information below.")
+    
+    if request.method == 'POST':
+        form = StudentProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your profile has been updated successfully!")
+            return redirect('student_profile')
+    else:
+        form = StudentProfileForm(instance=profile)
+    
+    # Get all registrations for the student
+    registrations = EventRegistration.objects.filter(user=request.user).select_related('event')
+    
+    # Get notifications of removed registrations
+    removals = RegistrationRemoval.objects.filter(user=request.user, is_read=False)
+    
+    return render(request, 'events/student_profile.html', {
+        'form': form,
+        'profile': profile,
+        'registrations': registrations,
+        'removals': removals,
+        'today': date.today()
+    })
+
+@login_required
+def mark_notification_read(request, notification_id):
+    """Mark a removal notification as read"""
+    notification = get_object_or_404(RegistrationRemoval, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    messages.info(request, f"Notification marked as read.")
+    return redirect('student_profile')
+
+@login_required
+@user_passes_test(is_admin)
+def remove_registration(request, registration_id):
+    """Admin view to remove a student from an event with remarks"""
+    registration = get_object_or_404(EventRegistration, id=registration_id)
+    
+    if request.method == 'POST':
+        form = RemoveRegistrationForm(request.POST)
+        if form.is_valid():
+            reason = form.cleaned_data['reason']
+            remarks = form.cleaned_data['remarks']
+            
+            # Create a removal record
+            RegistrationRemoval.objects.create(
+                user=registration.user,
+                event=registration.event,
+                removed_by=request.user,
+                reason=reason,
+                remarks=remarks
+            )
+            
+            # Delete the registration
+            event_title = registration.event.title
+            student_name = registration.user.get_full_name() or registration.user.username
+            
+            # If team registration, handle differently
+            if registration.is_team_registration and registration.team:
+                team = registration.team
+                # If user is team leader, delete the whole team
+                if team.leader == registration.user:
+                    # Remove all team members
+                    TeamMember.objects.filter(team=team).delete()
+                    # Remove all registrations for team members
+                    EventRegistration.objects.filter(team=team).delete()
+                    # Delete the team
+                    team.delete()
+                    messages.success(request, f"Team '{team.name}' for event '{event_title}' has been removed.")
+                else:
+                    # Just remove this member from the team
+                    TeamMember.objects.filter(team=team, user=registration.user).delete()
+                    registration.delete()
+                    messages.success(request, f"{student_name} has been removed from team '{team.name}' for event '{event_title}'.")
+            else:
+                # For solo registrations
+                registration.delete()
+                messages.success(request, f"{student_name} has been removed from event '{event_title}'.")
+                
+            return redirect('admin_dashboard')
+    else:
+        form = RemoveRegistrationForm()
+    
+    return render(request, 'events/remove_registration.html', {
+        'form': form,
+        'registration': registration
+    })
+
+@login_required
+@user_passes_test(is_admin)
+def view_event_registrations(request, event_id):
+    """Admin view to see all registrations for an event"""
+    event = get_object_or_404(Event, id=event_id)
+    registrations = EventRegistration.objects.filter(event=event).select_related('user', 'team')
+    
+    return render(request, 'events/event_registrations.html', {
+        'event': event,
+        'registrations': registrations
+    })
+
+@login_required
+def reply_to_comment(request, discussion_id):
+    """View to handle replying to comments"""
+    parent_comment = get_object_or_404(EventDiscussion, id=discussion_id)
+    event = parent_comment.event
+    
+    if request.method == 'POST':
+        form = EventDiscussionForm(request.POST)
+        if form.is_valid():
+            reply = form.save(commit=False)
+            reply.event = event
+            reply.user = request.user
+            reply.parent = parent_comment
+            reply.is_admin_response = request.user.is_staff
+            reply.save()
+            messages.success(request, "Your reply has been added!")
+    
+    return redirect('event_detail', event_id=event.id)
+
+@login_required
+def delete_comment(request, discussion_id):
+    """View to delete a comment or reply"""
+    comment = get_object_or_404(EventDiscussion, id=discussion_id)
+    event_id = comment.event.id
+    
+    # Ensure the user is the owner of the comment or an admin
+    if comment.user == request.user or request.user.is_staff:
+        comment.delete()
+        messages.success(request, "Comment deleted successfully.")
+    else:
+        messages.error(request, "You don't have permission to delete this comment.")
+    
+    return redirect('event_detail', event_id=event_id)
+
+@login_required
+def delete_review(request, review_id):
+    """View to delete a review"""
+    review = get_object_or_404(EventReview, id=review_id)
+    event_id = review.event.id
+    
+    # Ensure the user is the owner of the review or an admin
+    if review.user == request.user or request.user.is_staff:
+        review.delete()
+        messages.success(request, "Review deleted successfully.")
+    else:
+        messages.error(request, "You don't have permission to delete this review.")
+    
     return redirect('event_detail', event_id=event_id)
