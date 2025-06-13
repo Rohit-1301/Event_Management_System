@@ -1,0 +1,160 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Admin Dashboard - Event Management System{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <h1 class="mb-4">Admin Dashboard</h1>
+    
+    <div class="row">
+        <!-- Quick Stats -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Events</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="counter">{{ upcoming_events.count }}</h2>
+                    <p>Upcoming Events</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Registrations</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="counter">{{ registration_count }}</h2>
+                    <p>Total Registrations</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Past Events</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="counter">{{ past_events.count }}</h2>
+                    <p>Completed Events</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'create_event' %}" class="btn btn-primary">Create New Event</a>
+                        <a href="{% url 'admin:events_event_changelist' %}" class="btn btn-outline-primary">Manage All Events</a>
+                        <a href="{% url 'admin:events_eventregistration_changelist' %}" class="btn btn-outline-secondary">View All Registrations</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upcoming Events Management -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Upcoming Events</h5>
+            <a href="{% url 'create_event' %}" class="btn btn-sm btn-light">+ Add Event</a>
+        </div>
+        <div class="card-body">
+            {% if upcoming_events %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Venue</th>
+                                <th>Status</th>
+                                <th>Registrations</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in upcoming_events %}
+                                <tr>
+                                    <td>{{ event.title }}</td>
+                                    <td>{{ event.date }}</td>
+                                    <td>{{ event.time }}</td>
+                                    <td>{{ event.venue }}</td>
+                                    <td>
+                                        {% if event.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ event.eventregistration_set.count }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'edit_event' event.id %}" class="btn btn-sm btn-primary">Edit</a>
+                                            <a href="{% url 'event_detail' event.id %}" class="btn btn-sm btn-info">View</a>
+                                            <a href="{% url 'delete_event' event.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this event?')">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No upcoming events scheduled.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recent Registrations -->
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">Recent Registrations</h5>
+        </div>
+        <div class="card-body">
+            {% if recent_registrations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Event</th>
+                                <th>Registration Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in recent_registrations %}
+                                <tr>
+                                    <td>{{ reg.name }}</td>
+                                    <td>{{ reg.email }}</td>
+                                    <td>{{ reg.event.title }}</td>
+                                    <td>{{ reg.registered_at|date:"M d, Y H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if recent_registrations.count >= 5 %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'admin:events_eventregistration_changelist' %}" class="btn btn-sm btn-outline-success">View All Registrations</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p>No recent registrations.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

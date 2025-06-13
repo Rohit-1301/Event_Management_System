@@ -1,0 +1,118 @@
+{% extends 'events/base.html' %}
+
+{% block title %}My Registrations - Event Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-ticket-perforated"></i> My Event Registrations</h1>
+        <a href="{% url 'home' %}" class="btn btn-outline-primary">
+            <i class="bi bi-house"></i> Return to Home
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Registrations</h5>
+                    <div class="display-1">{{ total_registrations }}</div>
+                    <p class="text-muted">total event registrations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab" aria-controls="upcoming" aria-selected="true">Upcoming Events ({{ upcoming_registrations|length }})</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button" role="tab" aria-controls="past" aria-selected="false">Past Events ({{ past_registrations|length }})</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content pt-3" id="myTabContent">
+                        <div class="tab-pane fade show active" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+                            {% if upcoming_registrations %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Event</th>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Venue</th>
+                                                <th>Registered On</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for registration in upcoming_registrations %}
+                                                <tr>
+                                                    <td>{{ registration.event.title }}</td>
+                                                    <td>{{ registration.event.date }}</td>
+                                                    <td>{{ registration.event.time }}</td>
+                                                    <td>{{ registration.event.venue }}</td>
+                                                    <td>{{ registration.registered_at|date:"M d, Y" }}</td>
+                                                    <td>
+                                                        <a href="{% url 'event_detail' registration.event.id %}" class="btn btn-sm btn-outline-primary">
+                                                            View Details
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> You haven't registered for any upcoming events.
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="tab-pane fade" id="past" role="tabpanel" aria-labelledby="past-tab">
+                            {% if past_registrations %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Event</th>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Venue</th>
+                                                <th>Registered On</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for registration in past_registrations %}
+                                                <tr>
+                                                    <td>{{ registration.event.title }}</td>
+                                                    <td>{{ registration.event.date }}</td>
+                                                    <td>{{ registration.event.time }}</td>
+                                                    <td>{{ registration.event.venue }}</td>
+                                                    <td>{{ registration.registered_at|date:"M d, Y" }}</td>
+                                                    <td>
+                                                        <a href="{% url 'event_detail' registration.event.id %}" class="btn btn-sm btn-outline-secondary">
+                                                            View Details
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> You don't have any past event registrations.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

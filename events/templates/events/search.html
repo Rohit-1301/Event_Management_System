@@ -1,0 +1,150 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Search Events - Event Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-search"></i> Search Events</h2>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Filter Options</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'search_events' %}">
+                        <div class="mb-3">
+                            <label for="id_query" class="form-label">Keyword Search</label>
+                            {{ form.query }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_domain" class="form-label">Event Domain</label>
+                            {{ form.domain }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_participation_type" class="form-label">Participation Type</label>
+                            {{ form.participation_type }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_date_from" class="form-label">Date From</label>
+                            {{ form.date_from }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_date_to" class="form-label">Date To</label>
+                            {{ form.date_to }}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.upcoming_only }}
+                            <label class="form-check-label" for="id_upcoming_only">
+                                Upcoming events only
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <a href="{% url 'search_events' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Reset Filters
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            {% if request.GET %}Search Results{% else %}All Events{% endif %}
+                            <span class="badge bg-secondary ms-2">{{ results.count }}</span>
+                        </h5>
+                        {% if request.GET %}
+                            <small class="text-muted">Filters applied</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if results %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Event</th>
+                                        <th>Date</th>
+                                        <th>Domain</th>
+                                        <th>Participation</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in results %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ event.title }}</strong>
+                                                <div class="small text-muted">{{ event.venue }}</div>
+                                            </td>
+                                            <td>{{ event.date }}</td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    {{ event.get_domain_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">
+                                                    {{ event.get_participation_type_display }}
+                                                </span>
+                                                {% if event.participation_type != 'SOLO' %}
+                                                    <div class="small">
+                                                        {{ event.min_team_size }}-{{ event.max_team_size }} members
+                                                    </div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if event.date >= today %}
+                                                    {% if event.is_active %}
+                                                        <span class="badge bg-success">Active</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Inactive</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Past</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'event_detail' event.id %}" class="btn btn-sm btn-primary">Details</a>
+                                                {% if event.date >= today and event.is_active %}
+                                                    <a href="{% url 'register_event' event.id %}" class="btn btn-sm btn-outline-primary">Register</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No events found matching your search criteria.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Join Team - {{ event.title }} - Eventure{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Join a Team for {{ event.title }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-4">Enter the team code provided by the team leader to join their team.</p>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.team_code.id_for_label }}" class="form-label">Team Code</label>
+                        {{ form.team_code.errors }}
+                        {{ form.team_code }}
+                        <div class="form-text">The team code is an 8-character code provided by the team leader.</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'team_choice' event.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-people"></i> Join Team
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

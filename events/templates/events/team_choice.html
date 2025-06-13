@@ -1,0 +1,54 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Team Options - {{ event.title }} - Eventure{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Team Options for {{ event.title }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-4">This event requires team participation. Would you like to create a new team or join an existing team?</p>
+                
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people-fill fs-1 text-primary mb-3"></i>
+                                    <h5 class="card-title">Create a New Team</h5>
+                                    <p class="card-text">Start a new team and become the team leader.</p>
+                                    <button type="submit" name="team_choice" value="create" class="btn btn-primary">
+                                        Create Team
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person-plus-fill fs-1 text-success mb-3"></i>
+                                    <h5 class="card-title">Join Existing Team</h5>
+                                    <p class="card-text">Enter a team code to join someone else's team.</p>
+                                    <button type="submit" name="team_choice" value="join" class="btn btn-success">
+                                        Join Team
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'event_detail' event.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Event
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

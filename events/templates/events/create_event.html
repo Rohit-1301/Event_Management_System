@@ -1,0 +1,98 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Create New Event - Event Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Create New Event</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Event Title</label>
+                        {{ form.title.errors }}
+                        <input type="text" name="{{ form.title.name }}" id="{{ form.title.id_for_label }}" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description.errors }}
+                        <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" class="form-control" rows="5" required></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.domain.id_for_label }}" class="form-label">Event Domain</label>
+                            {{ form.domain.errors }}
+                            {{ form.domain }}
+                            <div class="form-text">Select the domain this event belongs to.</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.participation_type.id_for_label }}" class="form-label">Participation Type</label>
+                            {{ form.participation_type.errors }}
+                            {{ form.participation_type }}
+                            <div class="form-text">Choose whether this event allows solo participants, teams, or both.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.venue.id_for_label }}" class="form-label">Venue</label>
+                            {{ form.venue.errors }}
+                            <input type="text" name="{{ form.venue.name }}" id="{{ form.venue.id_for_label }}" class="form-control" required>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+                            {{ form.date.errors }}
+                            <input type="date" name="{{ form.date.name }}" id="{{ form.date.id_for_label }}" class="form-control" required>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="{{ form.time.id_for_label }}" class="form-label">Time</label>
+                            {{ form.time.errors }}
+                            <input type="time" name="{{ form.time.name }}" id="{{ form.time.id_for_label }}" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.min_team_size.id_for_label }}" class="form-label">Minimum Team Size</label>
+                            {{ form.min_team_size.errors }}
+                            {{ form.min_team_size }}
+                            <div class="form-text">Minimum number of participants in a team.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.max_team_size.id_for_label }}" class="form-label">Maximum Team Size</label>
+                            {{ form.max_team_size.errors }}
+                            {{ form.max_team_size }}
+                            <div class="form-text">Maximum number of participants in a team.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}" checked>
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Active Event
+                            </label>
+                            <div class="form-text">Inactive events will not be visible to users.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Create Event</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

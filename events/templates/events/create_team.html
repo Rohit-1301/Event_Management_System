@@ -1,0 +1,52 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Create Team - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'event_detail' event.id %}">{{ event.title }}</a></li>
+            <li class="breadcrumb-item active">Create Team</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">Create Team for {{ event.title }}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Team size requirements: 
+                        {% if event.min_team_size == event.max_team_size %}
+                            <strong>{{ event.min_team_size }} members</strong>
+                        {% else %}
+                            <strong>{{ event.min_team_size }}-{{ event.max_team_size }} members</strong>
+                        {% endif %}
+                        (including you as team leader)
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Team Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger mt-1">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'event_detail' event.id %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create Team</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

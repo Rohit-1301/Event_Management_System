@@ -1,0 +1,59 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Choose Participation Type - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">How would you like to participate?</h2>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">{{ event.title }}</h5>
+                    <p>This event allows both individual and team participation. Please select how you would like to register:</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person display-1 mb-3"></i>
+                                    <h5 class="card-title">Individual Participation</h5>
+                                    <p class="card-text">Register as a solo participant</p>
+                                    <form method="post" action="{% url 'register_event' event.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="participation_choice" value="solo">
+                                        <button type="submit" class="btn btn-primary">Continue as Individual</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people display-1 mb-3"></i>
+                                    <h5 class="card-title">Team Participation</h5>
+                                    <p class="card-text">Create a team ({{ event.min_team_size }}-{{ event.max_team_size }} members)</p>
+                                    <form method="post" action="{% url 'register_event' event.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="participation_choice" value="team">
+                                        <button type="submit" class="btn btn-primary">Continue with Team</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'event_detail' event.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Event Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

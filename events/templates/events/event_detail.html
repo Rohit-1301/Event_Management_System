@@ -1,0 +1,162 @@
+{% extends 'events/base.html' %}
+
+{% block title %}{{ event.title }} - Event Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <h1 class="card-title">{{ event.title }}</h1>
+                  <div class="mb-4">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge {% if event.date >= today %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if event.date >= today %}Upcoming Event{% else %}Past Event{% endif %}
+                        </span>
+                        <span class="badge bg-info">{{ domain_display }}</span>
+                        <span class="badge bg-primary">{{ participation_type_display }}</span>
+                        <span class="badge {% if event.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if event.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><i class="bi bi-calendar"></i> <strong>Date:</strong> {{ event.date }}</p>
+                            <p><i class="bi bi-clock"></i> <strong>Time:</strong> {{ event.time }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><i class="bi bi-geo-alt"></i> <strong>Venue:</strong> {{ event.venue }}</p>
+                            <p><i class="bi bi-people"></i> <strong>Registrations:</strong> {{ event.eventregistration_set.count }}</p>
+                        </div>
+                    </div>
+
+                    {% if event.participation_type != 'SOLO' %}
+                    <div class="card bg-light my-3">
+                        <div class="card-body">
+                            <h5><i class="bi bi-people-fill"></i> Team Information</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Team Size:</strong> 
+                                    {% if event.min_team_size == event.max_team_size %}
+                                        {{ event.min_team_size }} members
+                                    {% else %}
+                                        {{ event.min_team_size }} - {{ event.max_team_size }} members
+                                    {% endif %}
+                                    </p>
+                                </div>
+                                {% if user_team %}
+                                <div class="col-md-6 text-md-end">
+                                    <a href="{% url 'manage_team' user_team.id %}" class="btn btn-sm btn-info">
+                                        <i class="bi bi-people-fill"></i> Manage Your Team
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <h4>About this Event</h4>
+                <div class="event-description mb-4">
+                    {{ event.description|linebreaks }}
+                </div>
+                  <div class="d-flex justify-content-between">
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Events
+                    </a>
+                      {% if event.date >= today and event.is_active %}
+                        {% if user.is_authenticated %}
+                            {% if is_registered %}
+                                <div>
+                                    <span class="badge bg-success me-2">
+                                        <i class="bi bi-check-circle"></i> You are registered
+                                    </span>
+                                    {% if user_team %}
+                                        <a href="{% url 'manage_team' user_team.id %}" class="btn btn-outline-primary me-2">
+                                            <i class="bi bi-people"></i> Manage Team
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'withdraw_registration' event.id %}" 
+                                       class="btn btn-outline-danger" 
+                                       onclick="return confirm('Are you sure you want to withdraw from this event?')">
+                                        <i class="bi bi-x-circle"></i> Withdraw Registration
+                                    </a>
+                                </div>
+                            {% else %}
+                                {% if event.participation_type == 'TEAM' %}
+                                    <a href="{% url 'create_team' event.id %}" class="btn btn-primary">
+                                        <i class="bi bi-people-fill"></i> Create a Team
+                                    </a>
+                                {% elif event.participation_type == 'BOTH' %}
+                                    <div class="btn-group">
+                                        <a href="{% url 'register_event' event.id %}" class="btn btn-primary">
+                                            <i class="bi bi-person-plus"></i> Register as Individual
+                                        </a>
+                                        <a href="{% url 'create_team' event.id %}" class="btn btn-outline-primary">
+                                            <i class="bi bi-people-fill"></i> Create a Team
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'register_event' event.id %}" class="btn btn-primary">
+                                        <i class="bi bi-person-plus"></i> Register for this Event
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary">
+                                <i class="bi bi-person-plus"></i> Login to Register
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-secondary">Registration Closed</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <img src="https://source.unsplash.com/640x360/?event,{{ event.title|urlencode }}" class="card-img-top" alt="{{ event.title }}">
+            <div class="card-body">
+                <h5>Event Details</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Status:</span>
+                        <span class="badge {% if event.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if event.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Date:</span>
+                        <span>{{ event.date }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Time:</span>
+                        <span>{{ event.time }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Venue:</span>
+                        <span>{{ event.venue }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Registrations:</span>
+                        <span>{{ event.eventregistration_set.count }}</span>
+                    </li>
+                </ul>
+            </div>
+            
+            {% if user.is_staff %}
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'edit_event' event.id %}" class="btn btn-warning btn-sm">Edit Event</a>
+                        <a href="{% url 'delete_event' event.id %}" class="btn btn-danger btn-sm" 
+                           onclick="return confirm('Are you sure you want to delete this event?')">Delete</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>    </div>
+</div>
+{% endblock %}
